@@ -1,124 +1,502 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TactiLearn Quiz</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TactiLearn</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
-        body {
+        body, html {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            color: white;
             background: url('bg.jpg') no-repeat center center fixed;
             background-size: cover;
-            color: white;
+        }
+
+        #loader {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: #0a0f0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loader-content {
             text-align: center;
         }
 
-        .container {
-            background: rgba(0, 0, 0, 0.7);
-            margin: 50px auto;
+        .loader-content h1 {
+            font-size: 3rem;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+        }
+
+        .loader-content p {
+            font-size: 1rem;
+            color: #8fbc8f;
+            letter-spacing: 2px;
+        }
+
+        #authScreen {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+
+        .auth-box {
+            background: rgba(255,255,255,0.05);
             padding: 30px;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 10px;
+            border-radius: 12px;
+            text-align: center;
+            width: 300px;
+        }
+
+        .auth-box input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            outline: none;
+            border-radius: 6px;
+        }
+
+        .auth-box button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            background: white;
+            color: black;
+        }
+
+        .overlay {
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .main-layout {
+            width: 90%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Center column now stacks title + Studies button */
+        .center-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        h1 {
+            font-size: 3.8rem;
+            letter-spacing: 4px;
+            text-align: center;
+            margin: 0;
         }
 
         button {
-            padding: 10px 20px;
-            margin: 10px;
+            background: none;
             border: none;
-            border-radius: 5px;
-            background-color: #ff9800;
             color: white;
-            font-size: 16px;
+            font-size: 1.4rem;
             cursor: pointer;
         }
 
-        button:hover {
-            background-color: #e68900;
+        .left-panel {
+            position: fixed;
+            top: 0;
+            left: -350px;
+            width: 350px;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            padding: 25px;
+            transition: 0.4s;
+            overflow-y: auto;
         }
+        .left-panel.active { left: 0; }
+
+        .right-panel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            padding: 25px;
+            transition: 0.4s;
+            overflow-y: auto;
+        }
+        .right-panel.active { right: 0; }
+
+        .close {
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .top-left {
+            position: absolute;
+            top: 20px;
+            left: 25px;
+        }
+
+        #studiesOverlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        #studiesPopup {
+            width: 70%;
+            max-width: 650px;
+            background: rgba(0,0,0,0.95);
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        #studiesPopup img {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
     </style>
 </head>
 
 <body>
 
-<div class="container">
+<div id="loader">
+    <div class="loader-content">
+        <h1>TactiLearn</h1>
+        <p id="loadingText"></p>
+    </div>
+</div>
 
-    <h1>🎯 TactiLearn Quiz</h1>
+<div id="authScreen">
+    <div class="auth-box">
+        <h2 id="authTitle">Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()" id="authBtn">Login</button>
+        <p onclick="toggleAuth()" style="cursor:pointer; margin-top:10px;">
+            Don't have account? Signup
+        </p>
+    </div>
+</div>
 
-    <button onclick="startQuiz()">Start Quiz</button>
-    <button onclick="toggleLectures()">Lectures</button>
+<div id="leftPanel" class="left-panel">
+    <div class="close" onclick="closePanels()">✖</div>
+    <div id="leftContent"></div>
+</div>
 
-    <div id="lectureBox" style="display:none; margin-top:20px;">
-        <h3>📚 Lectures</h3>
+<div id="rightPanel" class="right-panel">
+    <div class="close" onclick="closePanels()">✖</div>
+    <div id="rightContent"></div>
+</div>
 
-        <a href="https://youtu.be/DjHvDsH_RiY" target="_blank">Lecture 1</a><br><br>
-        <a href="https://www.youtube.com/live/-rQqJhTl1NY" target="_blank">Lecture 2</a>
+<!-- STUDIES POPUP -->
+<div id="studiesOverlay">
+    <div id="studiesPopup">
+        <div style="text-align:right; cursor:pointer;" onclick="closeStudies()">✖</div>
+
+        <h2>Unsung Heroes</h2>
+
+        <img src="ajit.jpg">
+
+        <h3>Ajit Doval</h3>
+        <p>
+            Played a key role during the IC-814 hijacking in 1999.
+            He negotiated the safe release of 186 hostages despite extreme pressure,
+            ensuring their return while managing national security risks.
+        </p>
+    </div>
+</div>
+
+<div class="overlay" id="mainApp">
+    <!-- "All Features" renamed to "Home" -->
+    <div class="top-left">
+        <button onclick="openLeft('all')">Home</button>
     </div>
 
-    <div id="quizBox" style="margin-top:20px;"></div>
+    <div class="main-layout">
+        <div class="side">
+            <button onclick="openLeft('leaderboard')">Leaderboard</button>
+            <button onclick="openLeft('gk')">GK</button>
+        </div>
 
+        <!-- Center column: title on top, Studies button below -->
+        <div class="center-col">
+            <h1>TactiLearn</h1>
+            <button onclick="openStudies()">Studies</button>
+        </div>
+
+        <div class="side">
+            <button onclick="openRight('quiz')">Test</button>
+            <button onclick="openRight('wars')">Wars</button>
+        </div>
+    </div>
 </div>
 
 <script>
 
-    let currentQuestion = null;
+    /* LOADING */
+    setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+    }, 2000);
 
-    function startQuiz() {
-        fetch('/game/startQuiz')
-        .then(() => loadNextQuestion());
+    /* Typing */
+    let text = "Initializing System...";
+    let i = 0;
+    function typeEffect() {
+        if (i < text.length) {
+            document.getElementById("loadingText").innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typeEffect, 40);
+        }
+    }
+    typeEffect();
+
+    /* AUTH */
+    let isLogin = true;
+
+    function toggleAuth() {
+        isLogin = !isLogin;
+        authTitle.innerText = isLogin ? "Login" : "Signup";
+        authBtn.innerText = isLogin ? "Login" : "Signup";
     }
 
-    function loadNextQuestion() {
-        fetch('/game/nextQuestion')
-        .then(res => res.json())
-        .then(data => {
+    function login() {
+        let user = username.value;
+        let pass = password.value;
 
-            if (!data || !data.question) {
-                showResult();
-                return;
+        if (!user || !pass) return alert("Enter details");
+
+        if (!isLogin) {
+            localStorage.setItem("user", user);
+            localStorage.setItem("pass", pass);
+            alert("Signup successful!");
+            toggleAuth();
+            return;
+        }
+
+        if (user === localStorage.getItem("user") && pass === localStorage.getItem("pass")) {
+            localStorage.setItem("currentUser", user);
+            authScreen.style.display = "none";
+            mainApp.style.display = "flex";
+        } else alert("Invalid credentials");
+    }
+
+    /* PANELS */
+    function closePanels() {
+        leftPanel.classList.remove("active");
+        rightPanel.classList.remove("active");
+    }
+
+    function openLeft(type) {
+        closePanels();
+        let content = "";
+
+        if (type === "all") {
+            content = `
+                <h2>Home</h2>
+                <button onclick="openLeft('leaderboard')">Leaderboard</button><br><br>
+                <button onclick="openLeft('gk')">GK</button><br><br>
+                <button onclick="openRight('quiz')">Test</button><br><br>
+                <button onclick="openRight('wars')">Wars</button>
+            `;
+        }
+
+        if (type === "leaderboard") {
+            let data = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+            data.sort((a, b) => b.score - a.score);
+
+            let currentUser = localStorage.getItem("currentUser");
+
+            let html = `<h2>Leaderboard (Out of 5)</h2>`;
+
+            if (data.length === 0) {
+                html += `<p>No scores yet</p>`;
+            } else {
+                data.forEach((u, index) => {
+                    let style = "";
+
+                    if (index === 0) style = "color: gold; font-weight: bold;";
+                    else if (index === 1) style = "color: silver;";
+                    else if (index === 2) style = "color: #cd7f32;";
+
+                    if (u.name === currentUser) {
+                        style += " background: rgba(255,255,255,0.1); padding:4px; border-radius:5px;";
+                    }
+
+                    html += `<p style="${style}">#${index+1} ${u.name} - ${u.score}</p>`;
+                });
             }
 
-            currentQuestion = data;
+            content = html;
+        }
 
-            document.getElementById("quizBox").innerHTML = `
-                <h3>${data.question}</h3>
+        if (type === "gk") {
+            content = `
+                <h2>GK for Defence</h2>
+                <iframe width="100%" height="200" src="https://www.youtube.com/embed/B9dYe69Yj1Q"></iframe>
+                <iframe width="100%" height="200" src="https://www.youtube.com/embed/HP8P06CcKig"></iframe>
+            `;
+        }
 
-                <button onclick="submitAnswer('${data.option1}')">${data.option1}</button><br><br>
-                <button onclick="submitAnswer('${data.option2}')">${data.option2}</button><br><br>
-                <button onclick="submitAnswer('${data.option3}')">${data.option3}</button>
+        leftContent.innerHTML = content;
+        leftPanel.classList.add("active");
+    }
+
+    function openRight(type) {
+        closePanels();
+        let content = "";
+
+        if (type === "quiz") {
+            content = `<h2>Test</h2><button onclick="startQuiz()">Start Quiz</button>`;
+        }
+
+        if (type === "wars") {
+            content = `<h2>Wars</h2><button onclick="showWarDates()">Important War Dates</button>`;
+        }
+
+        rightContent.innerHTML = content;
+        rightPanel.classList.add("active");
+    }
+
+    function showWarDates() {
+        rightContent.innerHTML = `
+            <h2>Important War Dates</h2>
+            <ul>
+                <li><b>WW1 (1914–1918)</b></li>
+                <li><b>WW2 (1939–1945)</b></li>
+                <li><b>Indo-China (1962)</b></li>
+                <li><b>Indo-Pak (1965)</b></li>
+                <li><b>Indo-Pak (1971)</b></li>
+                <li><b>Kargil (1999)</b></li>
+            </ul>
+            <button onclick="openRight('wars')">Back</button>
+        `;
+    }
+
+    /* QUIZ */
+    function startQuiz() {
+        fetch('http://localhost:8080/game/startQuiz')
+        .then(() => loadQuestion());
+    }
+
+    function loadQuestion() {
+        fetch('http://localhost:8080/game/nextQuestion')
+        .then(res => res.json())
+        .then(q => {
+            if (!q.question) return showResult();
+
+            rightContent.innerHTML = `
+                <h2>${q.question}</h2>
+                <button onclick="submitAnswer('${q.option1}')">${q.option1}</button><br><br>
+                <button onclick="submitAnswer('${q.option2}')">${q.option2}</button><br><br>
+                <button onclick="submitAnswer('${q.option3}')">${q.option3}</button>
             `;
         });
     }
 
     function submitAnswer(answer) {
-        fetch('/game/submitAnswer', {
+        fetch('http://localhost:8080/game/submitAnswer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ selectedAnswer: answer })
         })
-        .then(res => res.text())
-        .then(result => {
-            alert(result);
-            loadNextQuestion();
+        .then(res => res.json())
+        .then(data => {
+            alert(data.correct ? "Correct!" : "Wrong! Correct: " + data.correctAnswer);
+            loadQuestion();
         });
     }
 
     function showResult() {
-        fetch('/game/result')
+        fetch('http://localhost:8080/game/result')
         .then(res => res.text())
         .then(result => {
-            document.getElementById("quizBox").innerHTML = `
-                <h2>🎉 Quiz Finished!</h2>
-                <h3>${result}</h3>
-                <button onclick="startQuiz()">Restart Quiz</button>
+
+            let score = parseInt(result.match(/\d+/)[0]);
+            let user = localStorage.getItem("currentUser") || "Player";
+
+            let data = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+
+            let existing = data.find(u => u.name === user);
+            if (existing) {
+                if (score > existing.score) existing.score = score;
+            } else {
+                data.push({ name: user, score: score });
+            }
+
+            localStorage.setItem("leaderboard", JSON.stringify(data));
+
+            rightContent.innerHTML = `
+                <h2>${result}</h2>
+                <button onclick="openRight('quiz')">Play Again</button>
             `;
         });
     }
 
-    function toggleLectures() {
-        let box = document.getElementById("lectureBox");
-        box.style.display = box.style.display === "none" ? "block" : "none";
+    /* STUDIES FUNCTIONS */
+    function openStudies() {
+        let overlay = document.getElementById("studiesOverlay");
+        let popup = document.getElementById("studiesPopup");
+
+        overlay.style.display = "flex";
+
+        setTimeout(() => {
+            popup.style.transform = "scale(1)";
+            popup.style.opacity = "1";
+        }, 50);
+    }
+
+    function closeStudies() {
+        let overlay = document.getElementById("studiesOverlay");
+        let popup = document.getElementById("studiesPopup");
+
+        popup.style.transform = "scale(0.7)";
+        popup.style.opacity = "0";
+
+        setTimeout(() => {
+            overlay.style.display = "none";
+        }, 300);
     }
 
 </script>

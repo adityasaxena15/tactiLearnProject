@@ -8,11 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GameQuestion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String question;
     private String option1;
     private String option2;

@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class TactiLearnProjectApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TactiLearnProjectApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(TactiLearnProjectApplication.class, args);
+    }
 }

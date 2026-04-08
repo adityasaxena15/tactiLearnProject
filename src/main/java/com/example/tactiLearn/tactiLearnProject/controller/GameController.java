@@ -1,85 +1,80 @@
 package com.example.tactiLearn.tactiLearnProject.controller;
 
 import com.example.tactiLearn.tactiLearnProject.entity.GameQuestion;
-import com.example.tactiLearn.tactiLearnProject.repository.GameQuestionRepository;
+import com.example.tactiLearn.tactiLearnProject.entity.UserScore;
+import com.example.tactiLearn.tactiLearnProject.repository.TactiLearn;
+import com.example.tactiLearn.tactiLearnProject.repository.UserScoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/game")
 public class GameController {
 
     @Autowired
-    private GameQuestionRepository repo;
+    private TactiLearn repo;
+
+    @Autowired
+    private UserScoreRepository scoreRepo;
 
     private List<GameQuestion> quizQuestions;
     private int currentIndex = 0;
     private int score = 0;
 
-    // 🚀 START QUIZ
     @GetMapping("/startQuiz")
     public String startQuiz() {
-
         List<GameQuestion> all = repo.findAll();
-
-        if (all.isEmpty()) {
-            return "No questions available!";
-        }
-
+        if (all.isEmpty()) return "No questions available!";
         Collections.shuffle(all);
-
         quizQuestions = all.subList(0, Math.min(5, all.size()));
         currentIndex = 0;
         score = 0;
-
         return "Quiz started!";
     }
 
-    // ❓ NEXT QUESTION
     @GetMapping("/nextQuestion")
     public GameQuestion nextQuestion() {
-
         if (quizQuestions == null || currentIndex >= quizQuestions.size()) {
-            return new GameQuestion(); // ✅ NEVER return null
+            return new GameQuestion();
         }
-
-        GameQuestion q = quizQuestions.get(currentIndex);
-        currentIndex++;
-
-        return q;
+        return quizQuestions.get(currentIndex++);
     }
 
-    // 📤 SUBMIT ANSWER
     @PostMapping("/submitAnswer")
-    public String submitAnswer(@RequestBody Map<String, String> request) {
-
+    public Map<String, Object> submitAnswer(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
         if (quizQuestions == null || currentIndex == 0) {
-            return "Quiz not started!";
+            response.put("error", "Quiz not started!");
+            return response;
         }
 
         String selectedAnswer = request.get("selectedAnswer");
-
         GameQuestion currentQ = quizQuestions.get(currentIndex - 1);
+        boolean isCorrect = currentQ.getCorrectAnswer().equalsIgnoreCase(selectedAnswer);
+        if (isCorrect) score++;
 
-        if (currentQ.getCorrectAnswer().equalsIgnoreCase(selectedAnswer)) {
-            score++;
+        response.put("correct", isCorrect);
+        response.put("correctAnswer", currentQ.getCorrectAnswer());
+        response.put("explanation", currentQ.getExplanation());
+
+        if (currentIndex == quizQuestions.size()) {
+            UserScore finalScore = new UserScore();
+            finalScore.setUsername("Player 1");
+            finalScore.setScore(score);
+            scoreRepo.save(finalScore);
         }
-
-        return "Answer submitted!";
+        return response;
     }
 
-    // 📊 RESULT
     @GetMapping("/result")
     public String getResult() {
-
-        if (quizQuestions == null) {
-            return "Quiz not started!";
-        }
-
-        return "Your score is: " + score + "/" + quizQuestions.size();
+        return "Your score is: " + score + "/" + (quizQuestions != null ? quizQuestions.size() : 0);
     }
+
+    @GetMapping("/leaderboard")
+    public List<UserScore> getLeaderboard() {
+        return scoreRepo.findTop10ByOrderByScoreDesc();
+    }
+
 }
